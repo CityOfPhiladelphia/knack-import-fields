@@ -25,6 +25,14 @@ var typeMap = {
   'String': 'Text'
 }
 
+var fieldObjectFields = {
+  name: 'field_17',
+  alias: 'field_188',
+  type: 'field_165',
+  description: 'field_20',
+  dataset: 'field_21'
+}
+
 function generateOptions(val) {
   var options = []
   var mappedType = typeMap[val] || ''
@@ -76,6 +84,38 @@ function generateFieldTable(fields) {
   return markup.join('')
 }
 
+function submitFields(fields) {
+  var pending = 0
+  Knack.showSpinner()
+  
+  function checkIfDone() {
+    if(pending < 1) {
+      Knack.hideSpinner()
+    }
+  }
+  
+  fields.forEach(function(field) {
+    pending++
+    
+    // field[fieldObjectFields.dataset] = Knack.hash_id
+    
+    var url = 'https://api.knackhq.com/v1/scenes/scene_125/views/view_246/records/'
+    $.ajax({
+      url: url,
+      type: 'POST',
+      data: field,
+      headers: {
+        'X-Knack-Application-Id': '565b5b0f8e115a4c760607e8',
+        'X-Knack-REST-API-Key': 'knack'
+      },
+      complete: function() {
+        pending--
+        checkIfDone()
+      }
+    })
+  })
+}
+
 $(document).on('knack-scene-render.scene_124', function(event, view, data) {
   $('#view_245').empty().append(searchTemplate)
   
@@ -110,10 +150,12 @@ $(document).on('knack-scene-render.scene_124', function(event, view, data) {
     ;['name', 'alias', 'type', 'description'].forEach(function(attr) {
       ;[].forEach.call(e.currentTarget[attr], function(element, index) {
         if( ! fields[index]) fields[index] = {}
-        fields[index][attr] = element.value
+        var fieldObjectField = fieldObjectFields[attr]
+        fields[index][fieldObjectField] = element.value
       })
     })
     console.log('submitted', fields)
+    submitFields(fields)
     e.preventDefault()
   })
 })
