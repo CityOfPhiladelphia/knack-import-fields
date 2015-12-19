@@ -38,16 +38,17 @@ function generateOptions(val) {
 
 function generateFieldTable(fields) {
   var markup = [
-    '<table class="table">',
-      '<thead>',
-        '<tr>',
-          '<th>Name</th>',
-          '<th>Alias</th>',
-          '<th>Type</th>',
-          '<th>Description</th>',
-        '</tr>',
-      '</thead>',
-   	  '<tbody>'
+    '<form id="fieldsForm">',
+      '<table class="table">',
+        '<thead>',
+          '<tr>',
+            '<th>Name</th>',
+            '<th>Alias</th>',
+            '<th>Type</th>',
+            '<th>Description</th>',
+          '</tr>',
+        '</thead>',
+        '<tbody>'
   ]
   
   fields.forEach(function(field) {
@@ -66,8 +67,10 @@ function generateFieldTable(fields) {
   })
   
   markup = markup.concat([
-      '</tbody>',
-    '</table>'
+        '</tbody>',
+      '</table>',
+      '<input type="submit">',
+    '</form>'
   ])
                           
   return markup.join('')
@@ -76,10 +79,12 @@ function generateFieldTable(fields) {
 $(document).on('knack-scene-render.scene_124', function(event, view, data) {
   $('#view_245').empty().append(searchTemplate)
   
+  // Listen to the submission of the search form
   $('#layerForm').on('submit', function(e) {
     var layerName = e.currentTarget.layerName.value
     Knack.showSpinner()
     
+    // Query the sde-metadata-api with the search input
     $.ajax({
       url: 'https://api.phila.gov/sde-metadata-api/v1/feature-classes/' + layerName,
       dataType: 'json',
@@ -95,7 +100,20 @@ $(document).on('knack-scene-render.scene_124', function(event, view, data) {
       }
     })
     
-    
+    e.preventDefault()
+  })
+
+  // Listen to the submission of the fields table form
+  $('#view_247').on('submit', '#fieldsForm', function(e) {
+    // Cleverly construct an array of field objects from the form data
+    var fields = []
+    ;['name', 'alias', 'type', 'description'].forEach(function(attr) {
+      ;[].forEach.call(e.currentTarget[attr], function(element, index) {
+        if( ! fields[index]) fields[index] = {}
+        fields[index][attr] = element.value
+      })
+    })
+    console.log('submitted', fields)
     e.preventDefault()
   })
 })
