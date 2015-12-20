@@ -36,8 +36,7 @@ var searchTemplate = [
   '<form class="search" id="layerForm">',
   '<input name="layerName" id="layerName" type="text" placeholder="Search by layer name">',
   '<input type="submit">',
-  '</form>',
-  '<div id="layerFormStatus" class="kn-message" style="display: none"></div>'
+  '</form>'
 ].join('')
 
 var fieldTypes = Knack.objects.get(importConfig.fieldObject).fields.get(importConfig.fieldObjectFields.type).attributes.format.options
@@ -93,6 +92,10 @@ function generateFieldTable (fields) {
   return markup.join('')
 }
 
+function generateAlert (msg, type) {
+  return '<div class="kn-message ' + type + '"><p>' + msg + '</p></div>'
+}
+
 function submitFields (fields) {
   var pending = 0
   Knack.showSpinner()
@@ -100,6 +103,7 @@ function submitFields (fields) {
   function checkIfDone () {
     if (pending < 1) {
       Knack.hideSpinner()
+      $('#' + importConfig.importTableView).empty().html(generateAlert('Fields successfully imported', 'success'))
     }
   }
 
@@ -153,7 +157,7 @@ $(document).on('knack-scene-render.' + importConfig.importScene, function (event
         $('#' + importConfig.importTableView).empty().append(markup)
       },
       error: function (xhr, status, msg) {
-        $('#layerFormStatus').html('<p>Error: ' + msg + '</p>').css('display', 'inline-block')
+        $('#' + importConfig.importTableView).empty().append(generateAlert('Error: ' + msg, 'error'))
         Knack.hideSpinner()
       }
     })
