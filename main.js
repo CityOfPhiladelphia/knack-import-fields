@@ -2,6 +2,36 @@
  * Loads an "import fields" page that interacts with sde-metadata-api
  * https://github.com/cityofphiladelphia/sde-metadata-api
  */
+var importConfig = {
+  fieldObject: 'object_5',
+  fieldObjectFields: {
+    name: 'field_17',
+    alias: 'field_188',
+    type: 'field_165',
+    description: 'field_20',
+    dataset: 'field_21'
+  },
+  typeMap: {
+    'Blob': 'Other',
+    'Date': 'Date',
+    'Double': 'Numeric',
+    'Geometry': 'Other',
+    'Guid': 'GlobalID',
+    'Integer': 'Integer',
+    'OID': 'Integer',
+    'Raster': 'Other',
+    'Single': 'Numeric',
+    'SmallInteger': 'Integer',
+    'String': 'Text'
+  },
+  addFieldScene: 'scene_125',
+  addFieldView: 'view_246',
+  importScene: 'scene_124',
+  importSearchView: 'view_245',
+  importTableView: 'view_247',
+  apiHost: 'https://api.phila.gov/sde-metadata-api/v1/'
+}
+
 var searchTemplate = [
   '<form class="search" id="layerForm">',
   '<input name="layerName" id="layerName" type="text" placeholder="Search by layer name">',
@@ -10,32 +40,11 @@ var searchTemplate = [
   '<div id="layerFormStatus" class="kn-message" style="display: none"></div>'
 ].join('')
 
-var fieldTypes = Knack.objects.get('object_5').fields.get('field_165').attributes.format.options
-var typeMap = {
-  'Blob': 'Other',
-  'Date': 'Date',
-  'Double': 'Numeric',
-  'Geometry': 'Other',
-  'Guid': 'GlobalID',
-  'Integer': 'Integer',
-  'OID': 'Integer',
-  'Raster': 'Other',
-  'Single': 'Numeric',
-  'SmallInteger': 'Integer',
-  'String': 'Text'
-}
-
-var fieldObjectFields = {
-  name: 'field_17',
-  alias: 'field_188',
-  type: 'field_165',
-  description: 'field_20',
-  dataset: 'field_21'
-}
+var fieldTypes = Knack.objects.get(importConfig.fieldObject).fields.get(importConfig.fieldObjectFields.type).attributes.format.options
 
 function generateOptions (val) {
   var options = []
-  var mappedType = typeMap[val] || ''
+  var mappedType = importConfig.typeMap[val] || ''
 
   fieldTypes.forEach(function (fieldType) {
     var selected = fieldType === mappedType ? ' selected="selected"' : ''
@@ -97,9 +106,16 @@ function submitFields (fields) {
   fields.forEach(function (field) {
     pending++
 
-    field[fieldObjectFields.dataset] = Knack.hash_id
+    field[importConfig.fieldObjectFields.dataset] = Knack.hash_id
 
-    var url = 'https://api.knackhq.com/v1/scenes/scene_125/views/view_246/records/'
+    var url = [
+      'https://api.knackhq.com/v1/scenes/',
+      importConfig.addFieldScene,
+      '/views/',
+      importConfig.addFieldView,
+      '/records/'
+    ].join('')
+
     $.ajax({
       url: url,
       type: 'POST',
@@ -107,7 +123,7 @@ function submitFields (fields) {
       contentType: 'application/json',
       headers: {
         'Authorization': Knack.getUserToken(),
-        'X-Knack-Application-Id': '565b5b0f8e115a4c760607e8',
+        'X-Knack-Application-Id': Knack.application_id,
         'X-Knack-REST-API-Key': 'knack'
       },
       complete: function () {
@@ -118,8 +134,8 @@ function submitFields (fields) {
   })
 }
 
-$(document).on('knack-scene-render.scene_124', function (event, view, data) {
-  $('#view_245').empty().append(searchTemplate)
+$(document).on('knack-scene-render.' + importConfig.importScene, function (event, view, data) {
+  $('#' + importConfig.importSearchView).empty().append(searchTemplate)
 
   // Listen to the submission of the search form
   $('#layerForm').on('submit', function (e) {
@@ -128,13 +144,13 @@ $(document).on('knack-scene-render.scene_124', function (event, view, data) {
 
     // Query the sde-metadata-api with the search input
     $.ajax({
-      url: 'https://api.phila.gov/sde-metadata-api/v1/feature-classes/' + layerName,
+      url: importConfig.apiHost + '/feature-classes/' + layerName,
       dataType: 'json',
       success: function (data) {
         Knack.hideSpinner()
         $('#layerFormStatus').css('display', 'none')
         var markup = generateFieldTable(data.fields)
-        $('#view_247').empty().append(markup)
+        $('#' + importConfig.importTableView).empty().append(markup)
       },
       error: function (xhr, status, msg) {
         $('#layerFormStatus').html('<p>Error: ' + msg + '</p>').css('display', 'inline-block')
@@ -146,13 +162,13 @@ $(document).on('knack-scene-render.scene_124', function (event, view, data) {
   })
 
   // Listen to the submission of the fields table form
-  $('#view_247').on('submit', '#fieldsForm', function (e) {
+  $('#' + importConfig.importTableView).on('submit', '#fieldsForm', function (e) {
     // Cleverly construct an array of field objects from the form data
     var fields = []
       ;['name', 'alias', 'type', 'description'].forEach(function (attr) {
         ;[].forEach.call(e.currentTarget[attr], function (element, index) {
           if (!fields[index]) fields[index] = {}
-          var fieldObjectField = fieldObjectFields[attr]
+          var fieldObjectField = importConfig.fieldObjectFields[attr]
           fields[index][fieldObjectField] = element.value
         })
       })
