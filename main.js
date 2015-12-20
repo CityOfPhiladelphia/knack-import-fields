@@ -11,6 +11,12 @@ var importConfig = {
     description: 'field_20',
     dataset: 'field_21'
   },
+  addFieldScene: 'scene_125',
+  addFieldView: 'view_246',
+  importScene: 'scene_124',
+  importSearchView: 'view_245',
+  importTableView: 'view_247',
+  apiHost: 'https://api.phila.gov/sde-metadata-api/v1/',
   typeMap: {
     'Blob': 'Other',
     'Date': 'Date',
@@ -23,13 +29,7 @@ var importConfig = {
     'Single': 'Numeric',
     'SmallInteger': 'Integer',
     'String': 'Text'
-  },
-  addFieldScene: 'scene_125',
-  addFieldView: 'view_246',
-  importScene: 'scene_124',
-  importSearchView: 'view_245',
-  importTableView: 'view_247',
-  apiHost: 'https://api.phila.gov/sde-metadata-api/v1/'
+  }
 }
 
 var searchTemplate = [
