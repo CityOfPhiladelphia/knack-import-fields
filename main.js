@@ -97,14 +97,16 @@ function submitFields(fields) {
   fields.forEach(function(field) {
     pending++
     
-    // field[fieldObjectFields.dataset] = Knack.hash_id
+    field[fieldObjectFields.dataset] = Knack.hash_id
     
     var url = 'https://api.knackhq.com/v1/scenes/scene_125/views/view_246/records/'
     $.ajax({
       url: url,
       type: 'POST',
-      data: field,
+      data: JSON.stringify(field),
+      contentType: 'application/json',
       headers: {
+        'Authorization': Knack.getUserToken(),
         'X-Knack-Application-Id': '565b5b0f8e115a4c760607e8',
         'X-Knack-REST-API-Key': 'knack'
       },
